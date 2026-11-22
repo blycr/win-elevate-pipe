@@ -10,6 +10,10 @@ Requires Python 3.8+ on Windows. No third-party packages.
 ## Quick start
 
 ```powershell
+# Install directly from the release tag:
+pip install git+https://github.com/blycr/win-elevate-pipe.git@v0.1.0
+
+# Or install locally in editable mode:
 pip install -e .
 ```
 

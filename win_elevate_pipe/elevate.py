@@ -156,34 +156,35 @@ def serve_daemon(
                 }
                 if os.name == "nt":
                     kwargs["creationflags"] = CREATE_NO_WINDOW
-                proc = subprocess.Popen(cmd, **kwargs)
-
-                def watch_cancel() -> None:
-                    while proc.poll() is None:
-                        try:
-                            conn.setblocking(False)
-                            data = conn.recv(16)
-                            if data == b"" or b"CANCEL" in data:
+                with subprocess.Popen(cmd, **kwargs) as proc:
+                    def watch_cancel() -> None:
+                        while proc.poll() is None:
+                            try:
+                                conn.setblocking(False)
+                                data = conn.recv(16)
+                                if data == b"" or b"CANCEL" in data:
+                                    _kill_tree(proc.pid)
+                                    break
+                            except BlockingIOError:
+                                pass
+                            except Exception:
                                 _kill_tree(proc.pid)
                                 break
-                        except BlockingIOError:
-                            pass
-                        except Exception:
-                            _kill_tree(proc.pid)
-                            break
-                        finally:
-                            try:
-                                conn.setblocking(True)
-                            except Exception:
-                                pass
-                        time.sleep(0.1)
+                            finally:
+                                try:
+                                    conn.setblocking(True)
+                                except Exception:
+                                    pass
+                            time.sleep(0.1)
 
-                threading.Thread(target=watch_cancel, daemon=True).start()
+                    watcher = threading.Thread(target=watch_cancel, daemon=True)
+                    watcher.start()
 
-                assert proc.stdout is not None
-                for out_line in proc.stdout:
-                    conn.sendall((json.dumps({"type": "out", "data": out_line}) + "\n").encode("utf-8"))
-                rc = proc.wait()
+                    assert proc.stdout is not None
+                    for out_line in proc.stdout:
+                        conn.sendall((json.dumps({"type": "out", "data": out_line}) + "\n").encode("utf-8"))
+                    rc = proc.wait()
+                    watcher.join(timeout=0.5)
                 conn.sendall((json.dumps({"type": "exit", "code": rc}) + "\n").encode("utf-8"))
         except Exception:
             pass
