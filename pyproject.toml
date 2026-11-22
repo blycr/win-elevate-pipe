@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "win-elevate-pipe"
+version = "0.1.0"
+description = "Run elevated Windows commands inline inside your current terminal (no UAC popup console) and manage WinINet system proxy atomically. Zero dependencies."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+classifiers = [
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: System :: Systems Administration",
+]
+
+[project.scripts]
+win-elevate = "win_elevate_pipe.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["win_elevate_pipe*"]
